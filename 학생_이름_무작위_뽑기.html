@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>학생 이름 무작위 뽑기</title>
+  <style>
+    body { font-family: Arial, "Malgun Gothic", sans-serif; background:#f5f7fb; text-align:center; padding:30px; }
+    .container { max-width:700px; margin:0 auto; background:white; padding:30px; border-radius:20px; box-shadow:0 5px 20px rgba(0,0,0,.1); }
+    textarea { width:90%; height:220px; font-size:18px; padding:15px; border-radius:10px; border:1px solid #ccc; resize:vertical; }
+    .count-box { margin:20px 0; font-size:18px; }
+    #drawCount { width:70px; padding:8px; font-size:20px; text-align:center; border:1px solid #aaa; border-radius:8px; }
+    button { font-size:20px; padding:12px 25px; margin:10px; border:none; border-radius:12px; cursor:pointer; }
+    #startBtn { background:#4CAF50; color:white; }
+    #drawBtn { background:#2196F3; color:white; font-size:26px; }
+    #resetBtn { background:#777; color:white; }
+    #result { margin:30px 0; font-size:42px; font-weight:bold; min-height:70px; line-height:1.5; }
+    #remaining { font-size:18px; margin-top:15px; }
+    #history { margin-top:20px; padding:15px; background:#f2f2f2; border-radius:10px; text-align:left; line-height:1.8; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🎲 학생 이름 무작위 뽑기</h1>
+  <div id="inputArea">
+    <p>학생 이름을 한 줄에 한 명씩 입력하세요.<br>최대 20명까지 입력할 수 있습니다.</p>
+    <textarea id="nameInput" placeholder="예시:
+김민준
+이서연
+박지우
+최하늘
+정유진"></textarea>
+    <div class="count-box">
+      <label for="drawCount">한 번에 뽑을 인원 : </label>
+      <input type="number" id="drawCount" value="1" min="1" max="20"> 명
+    </div>
+    <button id="startBtn" onclick="start()">명단 입력 완료</button>
+  </div>
+
+  <div id="drawArea" class="hidden">
+    <div id="result">준비!</div>
+    <button id="drawBtn" onclick="drawNames()">🎯 이름 뽑기</button>
+    <button id="resetBtn" onclick="resetAll()">🔄 처음부터</button>
+    <div id="remaining"></div>
+    <div id="history">
+      <strong>📋 뽑힌 학생 기록</strong>
+      <div id="historyList">아직 없음</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let remainingNames = [];
+let selectedGroups = [];
+let drawCount = 1;
+
+function start() {
+  const input = document.getElementById("nameInput").value;
+  let names = input.split("\n").map(name => name.trim()).filter(name => name !== "");
+  drawCount = parseInt(document.getElementById("drawCount").value);
+
+  if (names.length === 0) { alert("학생 이름을 입력해주세요."); return; }
+  if (names.length > 20) { alert("학생은 최대 20명까지 입력할 수 있습니다."); return; }
+  if (!drawCount || drawCount < 1) { alert("뽑을 인원 수를 1명 이상 입력해주세요."); return; }
+  if (drawCount > names.length) { alert("뽑을 인원 수가 전체 학생 수보다 많습니다."); return; }
+
+  remainingNames = [...names];
+  selectedGroups = [];
+  document.getElementById("inputArea").classList.add("hidden");
+  document.getElementById("drawArea").classList.remove("hidden");
+  updateInfo();
+}
+
+function drawNames() {
+  if (remainingNames.length === 0) {
+    document.getElementById("result").innerText = "모두 뽑았습니다! 🎉";
+    return;
+  }
+
+  let numberToDraw = Math.min(drawCount, remainingNames.length);
+  let count = 0;
+
+  const animation = setInterval(() => {
+    let tempNames = [...remainingNames];
+    // Fisher-Yates shuffle for preview
+    for (let i = tempNames.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [tempNames[i], tempNames[j]] = [tempNames[j], tempNames[i]];
+    }
+    document.getElementById("result").innerHTML = tempNames.slice(0, numberToDraw).join(" · ");
+    count++;
+
+    if (count >= 15) {
+      clearInterval(animation);
+      let selected = [];
+      for (let i = 0; i < numberToDraw; i++) {
+        const randomIndex = Math.floor(Math.random() * remainingNames.length);
+        selected.push(remainingNames.splice(randomIndex, 1)[0]);
+      }
+      selectedGroups.push(selected);
+      document.getElementById("result").innerHTML = "🎉 " + selected.join(" · ") + " 🎉";
+      updateInfo();
+    }
+  }, 80);
+}
+
+function updateInfo() {
+  document.getElementById("remaining").innerText = "남은 학생 : " + remainingNames.length + "명";
+  if (selectedGroups.length === 0) {
+    document.getElementById("historyList").innerText = "아직 없음";
+  } else {
+    document.getElementById("historyList").innerHTML =
+      selectedGroups.map((group, index) => (index + 1) + "회 : " + group.join(", ")).join("<br>");
+  }
+}
+
+function resetAll() {
+  remainingNames = [];
+  selectedGroups = [];
+  document.getElementById("result").innerText = "준비!";
+  document.getElementById("drawArea").classList.add("hidden");
+  document.getElementById("inputArea").classList.remove("hidden");
+}
+</script>
+</body>
+</html>
